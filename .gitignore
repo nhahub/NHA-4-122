@@ -61,3 +61,4 @@ alembic/versions/*.pyc
 .pytest_cache/
 .coverage
 htmlcov/
+models/

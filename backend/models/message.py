@@ -30,5 +30,5 @@ class Message(Base):
         Index("ix_messages_session_created", "session_id", "created_at"),
         # Enforced at DB level — a service bug passing an invalid role fails here,
         # not silently in production.
-        CheckConstraint("role IN ('user', 'assistant')", name="ck_messages_role"),
+        CheckConstraint("role IN ('user', 'assistant', 'tool')", name="ck_messages_role"),
     )

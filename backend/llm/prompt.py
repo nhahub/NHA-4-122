@@ -49,6 +49,7 @@ def get_tokenizer() -> PreTrainedTokenizerFast:
 def format_chat_prompt(
     messages: list[dict[str, str]],
     system_prompt: str | None = None,
+    tools: list[dict] | None = None,
 ) -> str:
     """
     Convert a list of {"role": ..., "content": ...} dicts into the
@@ -59,9 +60,12 @@ def format_chat_prompt(
                        least the most recent user message.
         system_prompt: If provided, prepended as a {"role": "system"} message.
                        Falls back to settings.llm_system_prompt if None.
+        tools:         If provided, the tokenizer's native Jinja template is
+                       used (which renders Hermes-style <tool_call> blocks).
+                       If None, the fallback chat_template override is used.
 
     Returns:
-        A single string ending with '<|im_start|>assistant\\n', which is the
+        A single string ending with '<|im_start|>assistant\n', which is the
         signal for the model to begin generating its response.
     """
     tokenizer = get_tokenizer()
@@ -69,13 +73,25 @@ def format_chat_prompt(
     effective_system_prompt = system_prompt or settings.llm_system_prompt
     full_messages = [{"role": "system", "content": effective_system_prompt}] + messages
 
-    prompt: str = tokenizer.apply_chat_template(
-        full_messages,
-        chat_template=settings.llm_chat_template,
-        tokenize=False,              # Return string, not token ID list
-        add_generation_prompt=True,  # Append the <|im_start|>assistant\n suffix
-        enable_thinking=settings.llm_enable_thinking,
-    )
+    if tools is not None:
+        # Use the tokenizer's native Jinja template — it knows the Hermes
+        # tool-call format the model was instruction-tuned on.
+        # Do NOT pass chat_template= override here; the fallback has no tool support.
+        prompt: str = tokenizer.apply_chat_template(
+            full_messages,
+            tools=tools,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=False,
+        )
+    else:
+        prompt = tokenizer.apply_chat_template(
+            full_messages,
+            chat_template=settings.llm_chat_template,
+            tokenize=False,              # Return string, not token ID list
+            add_generation_prompt=True,  # Append the <|im_start|>assistant\n suffix
+            enable_thinking=settings.llm_enable_thinking,
+        )
     return prompt
 
 

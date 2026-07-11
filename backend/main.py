@@ -21,6 +21,7 @@ from core.config import settings
 from core.database import get_db  # Ensures models are registered
 from llm.client import LLMClient
 from routers.auth import router as auth_router
+from routers.files import router as files_router
 from routers.internal import router as internal_router
 from routers.messages import router as messages_router
 from routers.sessions import router as sessions_router
@@ -93,6 +94,9 @@ app.include_router(messages_router, prefix=settings.api_prefix, tags=["messages"
 
 # Internal: health check + model status (no JWT required)
 app.include_router(internal_router, prefix="/internal", tags=["internal"])
+
+# Files: authenticated report download
+app.include_router(files_router, prefix=f"{settings.api_prefix}/files", tags=["files"])
 
 
 if __name__ == "__main__":

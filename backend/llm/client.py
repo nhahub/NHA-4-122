@@ -38,6 +38,10 @@ from core.metrics import model_status_gauge, model_busy_gauge
 # ── Sentinel — signals end-of-stream from the worker thread ──────────────────
 _SENTINEL = object()
 
+# Structural stop token for tool-calling. Code-level constant, not .env —
+# it is part of the tool-call protocol, not a tunable inference parameter.
+_TOOL_CALL_STOP = "</tool_call>"
+
 
 # ── Model state enum ─────────────────────────────────────────────────────────
 
@@ -219,7 +223,7 @@ class LLMClient:
                 stream = self._llm(
                     prompt,
                     max_tokens=settings.max_new_tokens,
-                    stop=settings.llm_stop_tokens,
+                    stop=[*settings.llm_stop_tokens, _TOOL_CALL_STOP],
                     temperature=settings.llm_temperature,
                     top_p=settings.llm_top_p,
                     top_k=settings.llm_top_k,

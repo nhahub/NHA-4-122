@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     log_level: str = "INFO"   # DEBUG | INFO | WARNING | ERROR | CRITICAL
     log_dir: str = "logs"     # Relative to the directory where uvicorn is launched
 
+    # Agentic tool output
+    reports_dir: str = "storage/reports"  # Override via REPORTS_DIR in .env
+
     # LLM — paths
     model_path: str
     tokenizer_path: str

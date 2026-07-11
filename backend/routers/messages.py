@@ -22,7 +22,7 @@ from core.metrics import busy_rejections_total
 from core.utils import sse_generator
 from llm.client import LLMClient
 from llm.context import fit_history
-from llm.prompt import count_tokens, format_chat_prompt
+from llm.prompt import count_tokens
 from models.feedback import MessageFeedback
 from models.message import Message
 from models.session import Session
@@ -30,6 +30,7 @@ from models.user import User
 from schemas.enums import RoleEnum
 from schemas.feedback import FeedbackIn, FeedbackOut
 from schemas.message import MessageIn
+from tools.schemas import ACTIVE_TOOL_SCHEMAS
 
 router = APIRouter()
 
@@ -99,12 +100,11 @@ async def send_message(
     all_messages = list(history_result.scalars().all())
     trimmed = fit_history(all_messages, settings.chat_history_token_budget)
 
-    # 6. Format the ChatML prompt
+    # 6. Build raw message list for the orchestration loop
     messages_for_template = [
         {"role": msg.role, "content": msg.content}
         for msg in trimmed
     ]
-    prompt = format_chat_prompt(messages_for_template)
 
     # 7. Reserve the assistant message ID and begin streaming
     assistant_id = uuid.uuid4()
@@ -113,7 +113,8 @@ async def send_message(
         sse_generator(
             db=db,
             client=client,
-            prompt=prompt,
+            messages=messages_for_template,
+            tools=ACTIVE_TOOL_SCHEMAS,
             session=session,
             user_message_id=user_msg.id,
             assistant_message_id=assistant_id,

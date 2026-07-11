@@ -20,9 +20,11 @@ from core.database import get_db
 from core.dependencies import get_current_user
 from core.utils import get_owned_session
 from models.feedback import MessageFeedback  # noqa: F401 — needed for selectinload
+from models.file import File  # noqa: F401 — needed for selectinload
 from models.message import Message
 from models.session import Session
 from models.user import User
+from schemas.enums import RoleEnum
 from schemas.session import SessionListOut, SessionListItem, SessionOut, SessionRename
 
 router = APIRouter()
@@ -97,8 +99,11 @@ async def get_session(
     result = await db.execute(
         select(Session)
         .options(
-            # Eagerly load messages, and for each message eagerly load feedback.
-            selectinload(Session.messages).selectinload(Message.feedback)
+            # Eagerly load messages, and for each message eagerly load feedback and files.
+            selectinload(Session.messages)
+            .selectinload(Message.feedback),
+            selectinload(Session.messages)
+            .selectinload(Message.files),
         )
         .where(
             Session.id == session_id,
@@ -111,6 +116,21 @@ async def get_session(
 
     # Sort messages chronologically in Python (selectinload doesn't support ordering).
     session.messages.sort(key=lambda m: m.created_at)
+
+    # Filter out tool-role messages before sending to the frontend.
+    # They stay in the DB so the LLM sees them in inference context on
+    # subsequent turns, but MessageBubble has no handler for this role.
+    session.messages = [
+        m for m in session.messages if m.role != RoleEnum.tool.value
+    ]
+
+    # Stamp file_id onto each message that has a linked file (e.g. a generated report).
+    # file_id is not a column on Message — it lives on the File row that back-references
+    # this message via File.message_id. Pydantic reads from attributes, so we set it
+    # transiently here; it is serialized into MessageOut.file_id on the response.
+    for m in session.messages:
+        m.file_id = m.files[0].id if m.files else None  # type: ignore[attr-defined]
+
     return session
 
 

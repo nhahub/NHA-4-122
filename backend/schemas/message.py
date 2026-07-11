@@ -32,3 +32,6 @@ class MessageOut(BaseModel):
     created_at: datetime
     # Populated only for assistant messages that have been rated. Null otherwise.
     feedback: FeedbackOut | None = None
+    # Populated only for assistant messages linked to a generated file (e.g. incident report).
+    # Null for all other messages. Used by the frontend to render a download button.
+    file_id: uuid.UUID | None = None

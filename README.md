@@ -160,8 +160,8 @@ Ensure you have the following installed on your system before proceeding:
 Clone the project repository to your local machine and navigate into it:
 
 ```bash
-git clone https://github.com/malekahmed99/chat-ui.git
-cd chat-ui
+git clone https://github.com/malekahmed99/NexoBot.git
+cd NexoBot
 ```
 
 ### 3. Local Model Download
@@ -205,7 +205,20 @@ docker-compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
 *(Note: If you do not have a GPU, you can run `docker-compose up --build` without the GPU override file, but performance will be severely degraded).*
 
 Once the containers are up:
-- **Frontend UI:** `http://localhost:5173` (or the port specified in your compose file)
-- **Backend API:** `http://localhost:8000`
+- **Frontend UI:** `http://localhost` (port 80)
 - **Prometheus:** `http://localhost:9090`
-- **Grafana:** `http://localhost:3000`
+- **Grafana:** `http://localhost:3001` — login: `admin` / `admin`
+
+> **Note:** The backend API (`port 8000`) is internal to the Docker network and is not exposed to the host directly — the frontend communicates with it through Nginx inside the container.
+
+---
+
+## 👥 Team & Contributions
+
+NexoBot was built as a team project for the **Digital Egypt Pioneers Initiative (DEPI) — AI & Data Science Track, Round 4** (Generative AI Projects booklet).
+
+| Team Member | Role | Key Contributions |
+|-------------|------|-------------------|
+| **Malek Ahmed** | Frontend Engineer | Built the entire React frontend from scratch — authentication UI (Login/Register), JWT session management via React Context, real-time SSE message streaming, chat session management, file upload interface, Tool Status Bar, responsive sidebar, and the full Nginx + Docker containerization of the frontend service |
+| **Basil Mohamed** | AI / ML Engineer | Fine-tuned the Qwen 3 (4B) model on a custom cybersecurity dataset, published the GGUF model on Hugging Face |
+| **Ali Islam** | Backend Engineer | FastAPI application, PostgreSQL schema & Alembic migrations, agentic tool calling, Prometheus metrics, JWT auth backend |
